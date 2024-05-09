@@ -1,94 +1,69 @@
 #include <stdio.h>
 #include <string.h>
-#define BIN 8
-#define DEC 4
-#define IPLEN 16
+#include <stdlib.h>
+#define BINARY_DIGITS 8
+#define IP_ADDR_SEGMENTS 4
+#define MAX_DIGITS_IN_IP_ADDR_SEGMENT 4
+#define IP_MAX_LENGTH 15
 
-char ip_adr[IPLEN];
-char subnet_mask[IPLEN];
-int len_ip;
-int len_subnet;
-int m, n, x;
-int ip_intArray[DEC][BIN];
-int subnet_intArray[DEC][BIN];
-int netzID[DEC][BIN];
-char ip[DEC][DEC];
-char subnet[DEC][DEC];
-int ip_int[DEC];
-int subnet_int[DEC];
+char ipstring[IP_MAX_LENGTH];
+char subnetstring[IP_MAX_LENGTH];
+int ipbinary[IP_ADDR_SEGMENTS][BINARY_DIGITS];
+int subnetbinary[IP_ADDR_SEGMENTS][BINARY_DIGITS];
+int netid[IP_ADDR_SEGMENTS][BINARY_DIGITS];
+char ipchars[IP_ADDR_SEGMENTS][MAX_DIGITS_IN_IP_ADDR_SEGMENT];
+char subnetchars[IP_ADDR_SEGMENTS][MAX_DIGITS_IN_IP_ADDR_SEGMENT];
+int ipdecimal[IP_ADDR_SEGMENTS];
+int subnetdecimal[IP_ADDR_SEGMENTS];
 
-void splitIP();
-int atoi();
-void conv2bin();
-void ausgabeBin();
-void netID();
-void convBin2dec();
+void splitipstring();
+void tobinary();
+void todecimal();
+void setnetid();
+void printbinaryaddress();
 
 int main()
 {
-
-    printf("Bitte geben Sie die IP-Adresse ein: ");
-    scanf("%s", &ip_adr);
-    len_ip = strlen(ip_adr) - 3;
-    printf("Laenge IP: \t%d\n\n", len_ip);
+    printf("Enter IP address: ");
+    scanf("%s", &ipstring);
   
-    splitIP(ip_adr, ip);
+    splitipstring(ipstring, ipchars);
 
-    /* Umwandeln der char-Arrays in Dezimalzahlen (int-Werte) */
-    for (n = 0; n <= 3; n++) {
-        ip_int[n] = atoi(ip[n]);
+    for (int i = 0; i < IP_ADDR_SEGMENTS; i++) {
+        ipdecimal[i] = atoi(ipchars[i]);
     }
 
-    conv2bin(ip_int, ip_intArray);
+    tobinary(ipdecimal, ipbinary);
       
-    printf("Bitte geben Sie die Subnetmaske ein: ");
-    scanf("%s", &subnet_mask);
-    len_subnet = strlen(subnet_mask) - 3;
-    printf("Laenge Subnet: \t%d\n\n", len_subnet);
+    printf("Enter subnet mask: ");
+    scanf("%s", &subnetstring);
 
-    splitIP(subnet_mask, subnet);
+    splitipstring(subnetstring, subnetchars);
     
-    /*  Umwandeln der char-Arrays in Dezimalzahlen (int-Werte) */
-    for (n = 0; n <= 3; n++) {
-        subnet_int[n] = atoi(subnet[n]);
+    for (int i = 0; i < IP_ADDR_SEGMENTS; i++) {
+        subnetdecimal[i] = atoi(subnetchars[i]);
     }
   
-    conv2bin(subnet_int, subnet_intArray);
+    tobinary(subnetdecimal, subnetbinary);
 
-    netID(ip_intArray, subnet_intArray, netzID);
+    setnetid(ipbinary, subnetbinary, netid);
     
-    printf("IP:\t");
-    for (m = 0; m <= 3; m++) {
-        for (n = 7; n >= 0; n--) {
-            printf("%d", ip_intArray[m][n]);
-        }
-        printf(" ");
-    }
+    printf("\n");
+    printf("IP:\t\t");
+    printbinaryaddress(ipbinary);
 
-    printf("\nSubnet:\t");
-    for (m = 0; m <= 3; m++) {
-        for (n = 7; n >= 0; n--) {
-            printf("%d", subnet_intArray[m][n]);
-        }
-        printf(" ");
-    }
+    printf("\nSubnet mask:\t");
+    printbinaryaddress(subnetbinary);
     printf("\n");
 
-    printf("\t-----------------------------------\n");
-
-    printf("Net-ID:\t");
-    for (m = 0; m <= 3; m++) {
-        for (n = 7; n >= 0; n--) {
-            printf("%d", netzID[m][n]);
-        }
-        printf(" ");
-    }
+    printf("\t\t-----------------------------------\n"); printf("Net ID:\t\t");
+    printbinaryaddress(netid);
     printf("\n\n");
 
-    printf("Netz-ID als IP-Adresse:\t");
-    for (n = 0; n <= 3; n++) {
-        convBin2dec(netzID[n]);
-        if (n < 3) {
+    printf("Net ID as IP address:\t");
+    for (int i = 0; i < IP_ADDR_SEGMENTS; i++) {
+        todecimal(netid[i]);
+        if (i < (IP_ADDR_SEGMENTS - 1)) {
             printf(".");
         }
     }
@@ -96,15 +71,14 @@ int main()
     return 0;
 }
 
-void splitIP(char input[IPLEN], char output[DEC][DEC])
+void splitipstring(char input[IP_MAX_LENGTH], char output[IP_ADDR_SEGMENTS][MAX_DIGITS_IN_IP_ADDR_SEGMENT])
 {
     int posNr = 0;
     int m = 0;
     int n = posNr;
-    int j;
-    for (j = 0; j <= 3; j++) {
+    for (int i = 0; i <= 3; i++) {
         while ((input[n] != '.') && (input[n] != '\0')) {
-            output[j][m] = input[n];
+            output[i][m] = input[n];
             posNr++;
             m++;
             n++;
@@ -115,69 +89,57 @@ void splitIP(char input[IPLEN], char output[DEC][DEC])
     }
 }
 
-void conv2bin(int input[], int output[][x])   /* warum x bei output[][x] ?  */
+void tobinary(int input[], int output[][BINARY_DIGITS])
 {
-    int m = 0;
-    int n = 0;
-    int zwErg;
-    for (m = 0; m <= 3; m++) {
-        int runde;
-        for (runde = 1; runde <= BIN; runde++) {
-            zwErg = input[m] % 2;
-            input[m] = input[m] / 2;
-            if(zwErg != 0) {
-                output[m][n] = 1;
+    int temp;
+    for (int i = 0; i < BINARY_DIGITS; i++) {
+        for (int k = 0, j = 0; k < BINARY_DIGITS; k++) {
+            temp = input[i] % 2;
+            input[i] = input[i] / 2;
+            if(temp != 0) {
+                output[i][j] = 1;
             } else {
-                output[m][n] = 0;
+                output[i][j] = 0;
             }
-            n++;
+            j++;
         }
     }
 }
 
-void ausgabeBin(int output[][BIN])
+void setnetid(int ip[][BINARY_DIGITS], int subnet[][BINARY_DIGITS], int netid[][BINARY_DIGITS])
 {
-    int m;
-    int n;
-    for (m = 0; m <= 3; m++) {
-        printf("ip%d:\t", m);
-        for (n = 7; n >= 0; n--) {		/* invertierte Ausgabe */
-            printf("%d", output[m][n]);
+    for (int i = 0; i < IP_ADDR_SEGMENTS; i++) {
+        for (int k = 0, j = (BINARY_DIGITS - 1); k < BINARY_DIGITS; k++, j--) {
+            if ((ip[i][j] == 1) && (subnet[i][j] == 1)) {
+                netid[i][j] = 1;
+            } else {
+                netid[i][j] = 0;
+            }
+        }
+    }
+}
+
+void todecimal(int input[BINARY_DIGITS])
+{
+    int factor = 1;
+    int temp[BINARY_DIGITS];
+    for (int i = 0; i < BINARY_DIGITS; i++) {
+        temp[i] = input[i] * factor;
+        factor = factor * 2;
+    }
+    int result = 0;
+    for (int i = (BINARY_DIGITS - 1); i >= 0; i--) {
+        result = result + temp[i];
+    }
+    printf("%d", result);
+}
+
+void printbinaryaddress(int binary[][BINARY_DIGITS])
+{
+    for (int i = 0; i < IP_ADDR_SEGMENTS; i++) {
+        for (int j = (BINARY_DIGITS - 1); j >= 0; j--) {
+            printf("%d", binary[i][j]);
         }
         printf(" ");
     }
-    printf("\n");
-}
-
-void netID(int ipArray[][BIN], int subnetArray[][BIN], int netzArray[][BIN])
-{
-    int p;
-    for (p = 0; p <= 3; p++) {
-        int runde;
-        int q;
-		for (runde = 1, q = 7; runde <= BIN; runde++, q--) {
-			if ((ipArray[p][q] == 1) && (subnetArray[p][q] == 1)) {
-				netzArray[p][q] = 1;
-			} else {
-				netzArray[p][q] = 0;
-			}
-		}
-    }
-}
-
-void convBin2dec(int input[BIN])
-{
-    int erg;
-    int m = 1;
-    int n;
-    int zwWert[BIN];
-    for (n = 0; n <= 7; n++) {
-        zwWert[n] = input[n] * m;
-        m = m * 2;
-    }
-    erg = zwWert[BIN - 1];
-    for (n = 6; n >= 0; n--) {
-        erg = erg + zwWert[n];
-    }
-    printf("%d", erg);
 }
