@@ -2,10 +2,11 @@ CLI tool that determines the net ID based on inputs for IP address and subnet ma
 
 Includes:
 - splitting up of input string into char array
-- conversion from decimal to binary, and binary to decimal.
+- conversion from decimal to binary, and binary to decimal
+- input validation (using regular expressions)
 
 TODO:
-- input validation
+-
 
 Screenshot:
 
