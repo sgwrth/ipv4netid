@@ -5,9 +5,6 @@ Includes:
 - conversion from decimal to binary, and binary to decimal
 - input validation (using regular expressions)
 
-TODO:
--
-
 Screenshot:
 
 ![ipv4netid](https://github.com/sgwrth/ipv4netid/assets/32227964/70f92843-7fdd-4502-aa81-5a59293c3e12)
